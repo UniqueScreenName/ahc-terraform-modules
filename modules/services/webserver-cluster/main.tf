@@ -1,7 +1,5 @@
+# Creates a cluster of ec2 instances in an autoscale group
 
-#
-# A module to create our ec2 instances in a highly available autoscale group
-#
 data "aws_availability_zones" "all" {}
 
 resource "aws_launch_configuration" "scalableec2" {
@@ -11,7 +9,7 @@ resource "aws_launch_configuration" "scalableec2" {
    user_data= <<-EOF
               #!/bin/bash
               echo ""
-              echo "Hello from scalableec2">index.html
+              echo "Hello from ${var.cluster_name}!">index.html
               nohup busybox httpd -f -p "${var.server_port}" &
               EOF
    lifecycle {
@@ -22,7 +20,7 @@ resource "aws_launch_configuration" "scalableec2" {
 }
 
 resource aws_security_group "scalableec2-sg" {
-  name="scalableec2-security-group"
+  name="${var.cluster_name}-sg"
   ingress {
     from_port=var.server_port
     to_port=var.server_port
@@ -31,7 +29,7 @@ resource aws_security_group "scalableec2-sg" {
     cidr_blocks=["0.0.0.0/0"]
   }
    tags = { 
-     Name=var.resource_name
+     Name=var.cluster_name
      owner=var.org_owner
      createdby=var.profile
    }
@@ -48,7 +46,7 @@ resource "aws_autoscaling_group" "scalableec2-asg" {
   health_check_type="ELB"
   tag {
      key="Name"
-     value=var.resource_name
+     value=var.cluster_name
      propagate_at_launch=true
   }
   tag {
@@ -60,7 +58,7 @@ resource "aws_autoscaling_group" "scalableec2-asg" {
 
 # create a classic elastic load balancer for this test. 
 resource "aws_elb" "scalableec2-elb" {
-  name = "scalableec2-elb"
+  name = "${var.cluster_name}-elb"
   availability_zones=data.aws_availability_zones.all.names
   security_groups=[aws_security_group.scalableec2-elb-sg.id]
 
@@ -81,14 +79,14 @@ resource "aws_elb" "scalableec2-elb" {
        unhealthy_threshold=2
   }
   tags = { 
-    Name=var.resource_name
+    Name=var.cluster_name
     owner=var.org_owner
     createdby=var.profile
   }
 }
 
 resource "aws_security_group" "scalableec2-elb-sg" {
-    name="scalableec2-elb-eg"
+    name="${var.cluster_name}-elb-sg"
      # allow access from anywhere on port 80 of the elb
     ingress {
       from_port=80
@@ -104,7 +102,7 @@ resource "aws_security_group" "scalableec2-elb-sg" {
       cidr_blocks=["0.0.0.0/0"]
     }
    tags = { 
-    Name=var.resource_name
+    Name=var.cluster_name
     owner=var.org_owner
     createdby=var.profile
   }

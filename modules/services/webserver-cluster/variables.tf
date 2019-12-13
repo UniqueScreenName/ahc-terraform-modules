@@ -11,6 +11,11 @@ variable "profile" {
   default="ahcterraform"
 }
 
+variable "cluster_name" {
+  description="A unique name for the cluster of ec2 instances.  It will be used as part of the name for resources created"
+  type=string
+}
+
 variable "instance_ami" {
   description="The ami to use when creating the ec2 instance"
   type=string
@@ -33,12 +38,6 @@ variable min_scalable_instances {
    description="The maximum number of scalable instances"
    default=2
 }
-variable "resource_name" {
-  description="The organization name of the resource"
-  type=string
-  default="scalableec2"
-}
-
 variable "server_port" {
   description="The port upon which the http server will listen"
   type=number
